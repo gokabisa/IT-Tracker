@@ -85,6 +85,8 @@ jobs:
 
       - name: Package + push Helm chart to GHCR (OCI)
         run: |
+          helm repo add bitnami https://charts.bitnami.com/bitnami
+          helm repo update bitnami
           cd deploy/kabisa-fleet
           helm dependency build
           helm package .
