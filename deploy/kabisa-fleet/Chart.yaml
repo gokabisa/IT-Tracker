@@ -1,0 +1,11 @@
+apiVersion: v2
+name: kabisa-fleet
+description: Helm chart for deploying Fleet (osquery) at Kabisa
+type: application
+version: 0.1.0
+appVersion: v4.84.3
+dependencies:
+  - name: redis
+    version: 25.3.11
+    repository: https://charts.bitnami.com/bitnami
+    condition: redis.enabled

@@ -1,0 +1,110 @@
+replicaCount: 1
+
+strategy:
+  type: Recreate
+
+terminationGracePeriodSeconds: 30
+
+image:
+  repository: ghcr.io/gokabisa/fleet
+  pullPolicy: IfNotPresent
+  tag: ""
+
+automountServiceAccountToken: false
+
+imagePullSecrets:
+  - name: ghcr-secret
+
+nameOverride: ""
+fullnameOverride: fleet
+
+existingSecret: fleet-server-key
+mysqlSecret: fleet-mysql
+
+mysql:
+  address: 163.172.148.210:16305
+  database: fleetdm
+  username: fleetdm
+  passwordKey: mysql-password
+
+service:
+  type: ClusterIP
+  port: 8080
+  targetPort: 8080
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 256Mi
+  limits:
+    cpu: 1
+    memory: 4Gi
+
+nodeSelector: {}
+tolerations: []
+affinity: {}
+
+podAnnotations: {}
+podLabels: {}
+
+securityContext:
+  readOnlyRootFilesystem: true
+  runAsNonRoot: true
+  runAsUser: 3333
+  runAsGroup: 3333
+
+env:
+  FLEET_SERVER_ADDRESS: "0.0.0.0:8080"
+  FLEET_SERVER_TLS: "false"
+  FLEET_LOGGING_JSON: "true"
+  FLEET_OSQUERY_RESULT_LOG_PLUGIN: "filesystem"
+  FLEET_OSQUERY_STATUS_LOG_PLUGIN: "filesystem"
+  FLEET_OSQUERY_STATUS_LOG_FILE: "/tmp/osquery_status"
+  FLEET_OSQUERY_RESULT_LOG_FILE: "/tmp/osquery_result"
+
+livenessProbe:
+  httpGet:
+    path: /healthz
+    port: 8080
+  initialDelaySeconds: 60
+  periodSeconds: 30
+  failureThreshold: 5
+
+readinessProbe:
+  httpGet:
+    path: /healthz
+    port: 8080
+  initialDelaySeconds: 10
+  periodSeconds: 15
+  failureThreshold: 10
+
+migration:
+  enabled: true
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 1Gi
+
+redis:
+  enabled: true
+  architecture: standalone
+  auth:
+    enabled: false
+  image:
+    repository: bitnamilegacy/redis
+  master:
+    persistence:
+      enabled: false
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 200m
+        memory: 256Mi
+  global:
+    security:
+      allowInsecureImages: true
