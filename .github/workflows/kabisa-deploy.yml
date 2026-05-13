@@ -108,11 +108,10 @@ jobs:
       - name: Create image pull secret for ghcr.io
         env:
           GHCR_PAT: ${{ secrets.GHCR_PAT }}
-          GHCR_USERNAME: ${{ github.actor }}
         run: |
           kubectl create secret docker-registry ghcr-secret \
             --docker-server=ghcr.io \
-            --docker-username="$GHCR_USERNAME" \
+            --docker-username=ProgrammerDATCH \
             --docker-password="$GHCR_PAT" \
             --namespace=${{ env.NAMESPACE }} \
             --dry-run=client -o yaml | kubectl apply -f -
