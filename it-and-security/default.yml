@@ -4,6 +4,9 @@ org_settings:
   conditional_access:
     bypass_disabled: true
   features:
+    additional_queries:
+      time: SELECT * FROM time
+      macs: SELECT mac FROM interface_details
     enable_host_users: true
     enable_software_inventory: true
   fleet_desktop:
