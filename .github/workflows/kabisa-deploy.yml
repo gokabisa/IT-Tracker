@@ -121,6 +121,8 @@ jobs:
         env:
           FLEET_MYSQL_PASSWORD: ${{ secrets.FLEET_MYSQL_PASSWORD }}
           FLEET_SERVER_PRIVATE_KEY: ${{ secrets.FLEET_SERVER_PRIVATE_KEY }}
+          FLEET_MDM_WINDOWS_WSTEP_IDENTITY_CERT_BYTES: ${{ secrets.FLEET_MDM_WINDOWS_WSTEP_IDENTITY_CERT_BYTES }}
+          FLEET_MDM_WINDOWS_WSTEP_IDENTITY_KEY_BYTES: ${{ secrets.FLEET_MDM_WINDOWS_WSTEP_IDENTITY_KEY_BYTES }}
         run: |
           kubectl create secret generic fleet-mysql \
             --namespace=${{ env.NAMESPACE }} \
@@ -129,6 +131,8 @@ jobs:
           kubectl create secret generic fleet-server-key \
             --namespace=${{ env.NAMESPACE }} \
             --from-literal=FLEET_SERVER_PRIVATE_KEY="$FLEET_SERVER_PRIVATE_KEY" \
+            --from-literal=FLEET_MDM_WINDOWS_WSTEP_IDENTITY_CERT_BYTES="$FLEET_MDM_WINDOWS_WSTEP_IDENTITY_CERT_BYTES" \
+            --from-literal=FLEET_MDM_WINDOWS_WSTEP_IDENTITY_KEY_BYTES="$FLEET_MDM_WINDOWS_WSTEP_IDENTITY_KEY_BYTES" \
             --dry-run=client -o yaml | kubectl apply -f -
 
       - name: Helm dependency update
