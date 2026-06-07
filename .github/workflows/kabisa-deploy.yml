@@ -148,6 +148,11 @@ jobs:
             --set image.tag=${{ steps.tag.outputs.tag }} \
             --wait --timeout 10m
 
+      - name: Restart deployment to pick up secret changes
+        run: |
+          kubectl rollout restart deployment/${{ env.RELEASE }} \
+            --namespace=${{ env.NAMESPACE }}
+
       - name: Rollout status
         run: |
           kubectl rollout status deployment/${{ env.RELEASE }} \
