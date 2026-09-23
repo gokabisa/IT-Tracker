@@ -3,7 +3,10 @@ replicaCount: 1
 image:
   repository: ghcr.io/gokabisa/fleet
   pullPolicy: IfNotPresent
-  tag: ""
+  # Bumped by .github/workflows/kabisa-deploy.yml's git write-back step on
+  # every deploy — never set by hand except this one initial pin, matching
+  # the exact SHA already live so Argo CD's first sync is a no-op adopt.
+  tag: "8d4bfcbcb9ec97c10d4d42f3c4f511763d4876e2"
 
 imagePullSecrets:
   - name: ghcr-secret
