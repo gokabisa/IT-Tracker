@@ -106,15 +106,27 @@ jobs:
       # (this job's on.push would otherwise fire again for a commit that
       # only bumps a tag, forever). Same pattern as New-backend's
       # deploy-k8s-staging.yml tag-bump step.
+      #
+      # The sed pattern matches the tag value generically (not anchored to
+      # a 40-char SHA): a workflow_dispatch override with a non-SHA tag
+      # (e.g. "v1.2.3") would otherwise make every subsequent automated run
+      # fail to match, silently no-op the tag bump, and freeze deploys —
+      # caught by Sentry Seer on this PR before merge.
+      #
+      # git pull --rebase before push guards against a non-fast-forward
+      # error if two runs land close together — also a Seer finding on
+      # this PR. Fleet deploys rarely enough that this is a reasonable,
+      # proportionate fix rather than a full retry loop.
       - name: Bump prod image tag (git write-back)
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
-          sed -i "s|tag: \"[0-9a-f]\{40\}\"|tag: \"${{ steps.tag.outputs.tag }}\"|" ${{ env.PROD_VALUES }}
+          sed -i "s|tag: \"[^\"]*\"|tag: \"${{ steps.tag.outputs.tag }}\"|" ${{ env.PROD_VALUES }}
           if git diff --quiet -- ${{ env.PROD_VALUES }}; then
-            echo "No tag change (already at this sha, or pattern didn't match — check ${{ env.PROD_VALUES }} by hand if unexpected)"
+            echo "No tag change (already at this tag, or pattern didn't match — check ${{ env.PROD_VALUES }} by hand if unexpected)"
           else
             git add ${{ env.PROD_VALUES }}
             git commit -m "chore(argocd): bump fleet prod image tag to ${{ steps.tag.outputs.tag }} [skip ci]"
+            git pull --rebase origin kabisa-deploy
             git push origin HEAD:kabisa-deploy
           fi
