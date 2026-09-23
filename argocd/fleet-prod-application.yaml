@@ -1,0 +1,51 @@
+# fleet Application. Full GitOps cutover from CI-driven `helm upgrade` (the
+# old .github/workflows/kabisa-deploy.yml) — first prod app to go through
+# this pattern end-to-end (mirrors gokabisa/New-backend's kabisa-backend
+# staging cutover): CI still builds and pushes the image, then bumps
+# image.tag in deploy/values/prod/kabisa-fleet.values.yaml and pushes that
+# commit; Argo CD picks it up from there.
+#
+# source.helm.releaseName is REQUIRED: without it Argo CD defaults the Helm
+# release name to this Application's own metadata.name (fleet-prod), which
+# would stand up a second, parallel Deployment/Service/Redis under
+# `fleet-prod-*` names instead of adopting the live release (`fleet`, from
+# the original `helm upgrade --install fleet ...`). Same gotcha
+# kabisa-backend-staging-application.yaml already hit and documented.
+#
+# No repoURL credential needed: gokabisa/IT-Tracker is a public repo (fork
+# of fleetdm/fleet), Argo CD can clone it anonymously over HTTPS.
+#
+# targetRevision is kabisa-deploy, NOT main — main tracks upstream
+# fleetdm/fleet for future merges; all of Kabisa's own deploy additions
+# (this chart, this Application, the CI workflow) live on kabisa-deploy,
+# which is what kabisa-deploy.yml actually deploys from in production today.
+#
+# Confirmed kubectl diff clean on the rendered chart (Deployment, Service,
+# PVC-less — no persistence enabled) against live before ever syncing, with
+# image.tag pinned below to the exact SHA already running
+# (8d4bfcbcb9ec97c10d4d42f3c4f511763d4876e2) so the first sync is a true
+# no-op adopt, not a redeploy.
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: fleet-prod
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: https://github.com/gokabisa/IT-Tracker.git
+    targetRevision: kabisa-deploy
+    path: deploy/kabisa-fleet
+    helm:
+      releaseName: fleet
+      valueFiles:
+        - ../values/prod/kabisa-fleet.values.yaml
+  destination:
+    server: https://kubernetes.default.svc
+    namespace: kabisa-app
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true
+    syncOptions:
+      - CreateNamespace=false
