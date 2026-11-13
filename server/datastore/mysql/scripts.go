@@ -312,6 +312,10 @@ func (ds *Datastore) listUpcomingHostScriptExecutions(ctx context.Context, hostI
 		extraWhere += " AND ua.activated_at IS NOT NULL"
 	}
 	// this selects software uninstalls too as they run as scripts
+	//
+	// The inner ORDER BY uses the IF() expression rather than the topmost alias:
+	// MySQL 8.0.21 (our Scaleway RDB) fails prepared statements that order a
+	// mergeable derived table by a select alias with "Unknown column 'topmost'".
 	listStmt := fmt.Sprintf(`
   SELECT
     id,
@@ -337,7 +341,7 @@ func (ds *Datastore) listUpcomingHostScriptExecutions(ctx context.Context, hostI
 			ua.host_id = ? AND
 			ua.activity_type IN ('script', 'software_uninstall')
 			%s
-		ORDER BY topmost DESC, priority DESC, created_at ASC) t`, extraWhere)
+		ORDER BY IF(ua.activated_at IS NULL, 0, 1) DESC, ua.priority DESC, ua.created_at ASC) t`, extraWhere)
 
 	var results []*fleet.HostScriptResult
 	if err := sqlx.SelectContext(ctx, ds.reader(ctx), &results, listStmt, hostID); err != nil {
