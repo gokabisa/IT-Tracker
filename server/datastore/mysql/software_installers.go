@@ -35,6 +35,8 @@ func (ds *Datastore) listUpcomingSoftwareInstalls(ctx context.Context, hostID ui
 		extraWhere = " AND activated_at IS NOT NULL"
 	}
 
+	// Order by the IF() expression, not the topmost alias: MySQL 8.0.21 fails this
+	// prepared statement with "Unknown column 'topmost'" (see scripts.go).
 	stmt := fmt.Sprintf(`
 	SELECT
 		execution_id
@@ -50,7 +52,7 @@ func (ds *Datastore) listUpcomingSoftwareInstalls(ctx context.Context, hostID ui
 			host_id = ? AND
 			activity_type = 'software_install'
 			%s
-		ORDER BY topmost DESC, priority ASC, created_at ASC) as t
+		ORDER BY IF(activated_at IS NULL, 0, 1) DESC, priority ASC, created_at ASC) as t
 `, extraWhere)
 	var results []string
 	if err := sqlx.SelectContext(ctx, ds.reader(ctx), &results, stmt, hostID); err != nil {
