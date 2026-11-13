@@ -6,7 +6,7 @@ image:
   # Bumped by .github/workflows/kabisa-deploy.yml's git write-back step on
   # every deploy — never set by hand except this one initial pin, matching
   # the exact SHA already live so Argo CD's first sync is a no-op adopt.
-  tag: "fed139f16d46241adb37b02624080e6fd928e8c8"
+  tag: "58dc39fb82db8ce1b383dcfe7b4e3f709fea3951"
 
 imagePullSecrets:
   - name: ghcr-secret
